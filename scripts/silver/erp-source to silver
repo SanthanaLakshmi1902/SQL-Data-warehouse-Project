@@ -1,0 +1,76 @@
+--************************************silver.erp_cust_az12********************************************--
+select 
+case when cid like 'NAS%' then SUBSTRING(cid, 4, len(cid))
+else cid end as cid,
+case when bdate > GETDATE() then null else bdate end as bdate, 
+case when UPPER(trim(gen)) in ('M' ,'Male') then 'Male' when UPPER(trim(gen)) in ('F','Female') then 'Female'
+else 'n/a' end as gen
+from bronze.erp_cust_az12
+
+--need to check with cust_info as the have forgein key, [here all cid are not in cst_key instead NAS is in its perfix]
+--select cid from bronze.erp_cust_az12 where cid in (select cst_key from silver.crm_cust_info)
+-- case used to modify it
+--checking bdate
+--select bdate from bronze.erp_cust_az12 where bdate > GETDATE()
+--case usedd to modify
+--checking gen
+--select distinct gen from bronze.erp_cust_az12
+--this column have unorganised data so case used to modify it
+
+insert into silver.erp_cust_az12(cid, bdate, gen)
+select 
+case when cid like 'NAS%' then SUBSTRING(cid, 4, len(cid))
+else cid end as cid,
+case when bdate > GETDATE() then null else bdate end as bdate, 
+case when UPPER(trim(gen)) in ('M' ,'Male') then 'Male' when UPPER(trim(gen)) in ('F','Female') then 'Female'
+else 'n/a' end as gen
+from bronze.erp_cust_az12
+--check silver layer table
+--select cid from silver.erp_cust_az12 where cid not in (select cst_key from silver.crm_cust_info)
+--select bdate from silver.erp_cust_az12 where bdate > GETDATE()
+--select distinct gen from silver.erp_cust_az12
+--select * from silver.erp_cust_az12
+
+--************************************silver.erp_cust_az12********************************************--
+select replace(cid, '-', '') as cid,
+case when TRIM(cntry) = 'DE' then 'Germany'
+when TRIM(cntry) in ('US', 'USA') then 'United States'
+when TRIM(cntry) = '' or cntry is null then 'n/a'
+else TRIM(cntry) end as cntry
+from bronze.erp_loc_a101
+
+--checking cid with silver.crm_cust_info table
+--select replace(cid, '-', '') as cid from bronze.erp_loc_a101 where replace(cid, '-', '') not in (select cst_key from silver.crm_cust_info)
+--in erp_loc_a101 also insert without - 
+--checking cntry[Data standardization & consistency]
+--select distinct cntry from bronze.erp_loc_a101 order by cntry
+--case used to rectify it
+
+insert into silver.erp_loc_a101(cid,cntry)
+select replace(cid, '-', '') as cid,
+case when TRIM(cntry) = 'DE' then 'Germany'
+when TRIM(cntry) in ('US', 'USA') then 'United States'
+when TRIM(cntry) = '' or cntry is null then 'n/a'
+else TRIM(cntry) end as cntry
+from bronze.erp_loc_a101
+
+--checking silver layer table
+--select replace(cid, '-', '') as cid from silver.erp_loc_a101 where replace(cid, '-', '') not in (select cst_key from silver.crm_cust_info)
+--select distinct cntry from silver.erp_loc_a101 order by cntry
+
+--************************************silver.erp_px_cat_g1v2********************************************--
+select * from bronze.erp_px_cat_g1v2;
+
+--checking
+--select id from bronze.erp_px_cat_g1v2 where id not in (select cat_id from silver.crm_prd_info) 
+--select * from bronze.erp_px_cat_g1v2 where cat!= trim(cat) or subcat!= trim(subcat) or maintenance!= trim(maintenance)
+--chekcing Data standardization & consistency
+select distinct cat from bronze.erp_px_cat_g1v2 
+select distinct subcat from bronze.erp_px_cat_g1v2
+select distinct maintenance from bronze.erp_px_cat_g1v2 
+
+insert into silver.erp_px_cat_g1v2(id, cat, subcat, maintenance)
+select * from bronze.erp_px_cat_g1v2;
+
+--have perfect dataset from bronze table so no modification
+select * from silver.erp_px_cat_g1v2;
